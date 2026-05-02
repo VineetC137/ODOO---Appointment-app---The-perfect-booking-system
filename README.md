@@ -8,3 +8,7 @@ current planning the working and all stuff
 
 HOUR 2 
 finalised UI and Workflow, trying to create basic Prototype
+
+
+HOUR 3&4 
+working on prototype
