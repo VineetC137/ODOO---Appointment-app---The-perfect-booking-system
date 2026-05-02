@@ -5,3 +5,6 @@ An Appointment Booking System that lets users schedule services in real time bas
 HOUR 1
 current planning the working and all stuff
 
+
+HOUR 2 
+finalised UI and Workflow, trying to create basic Prototype
