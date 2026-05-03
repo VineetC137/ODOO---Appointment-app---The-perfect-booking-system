@@ -1,6 +1,14 @@
-# Appointment Booking System
+# ODOO - Appointment App - The Perfect Booking System
+
+An Appointment Booking System that lets users schedule services in real time based on availability, while organizers manage slots, resources, and bookings efficiently with features like capacity control, payments, and conflict-free scheduling.
 
 A full-stack appointment booking app built with Node.js, React, and SQLite.
+
+## Development Timeline
+
+- **HOUR 1**: Planning the working and all stuff
+- **HOUR 2**: Finalised UI and Workflow, trying to create basic Prototype  
+- **HOUR 3&4**: Working on prototype
 
 ## Tech Stack
 
