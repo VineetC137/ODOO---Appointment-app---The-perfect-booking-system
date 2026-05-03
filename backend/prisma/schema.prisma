@@ -1,0 +1,174 @@
+// Prisma schema for Appointment Booking System
+// Using SQLite for zero-config local development
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// SQLite does not support native enums — stored as String with app-level validation
+// UserRole values: CUSTOMER | ORGANISER | ADMIN
+// BookingStatus values: REQUEST | BOOKED | CANCELLED
+// ResourceType values: STAFF | ROOM | EQUIPMENT
+
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  role         String    // CUSTOMER | ORGANISER | ADMIN
+  firstName    String
+  lastName     String
+  phone        String?
+  isVerified   Boolean   @default(false)
+  otp          String?
+  otpExpiresAt DateTime?
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  services  Service[]
+  resources Resource[]
+  bookings  Booking[]
+
+  @@index([email])
+  @@index([role])
+}
+
+model Service {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  duration    Int      // Duration in minutes
+  price       Float    // Stored as Float (SQLite has no Decimal type)
+  isActive    Boolean  @default(true)
+  organiserId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  organiser        User              @relation(fields: [organiserId], references: [id], onDelete: Cascade)
+  bookings         Booking[]
+  serviceResources ServiceResource[]
+
+  @@index([organiserId])
+  @@index([isActive])
+}
+
+model Resource {
+  id          String   @id @default(uuid())
+  name        String
+  type        String   // STAFF | ROOM | EQUIPMENT
+  capacity    Int      // Maximum concurrent bookings
+  isActive    Boolean  @default(true)
+  organiserId String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  organiser        User              @relation(fields: [organiserId], references: [id], onDelete: Cascade)
+  schedules        Schedule[]
+  bookings         Booking[]
+  serviceResources ServiceResource[]
+  exceptions       Exception[]
+
+  @@index([organiserId])
+  @@index([isActive])
+}
+
+// Junction table for many-to-many relationship between Service and Resource
+model ServiceResource {
+  id         String   @id @default(uuid())
+  serviceId  String
+  resourceId String
+  createdAt  DateTime @default(now())
+
+  service  Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@unique([serviceId, resourceId])
+  @@index([serviceId])
+  @@index([resourceId])
+}
+
+model Schedule {
+  id           String   @id @default(uuid())
+  resourceId   String
+  dayOfWeek    Int      // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  startTime    String   // HH:MM format
+  endTime      String   // HH:MM format
+  slotDuration Int      // Duration in minutes
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@index([resourceId])
+  @@index([dayOfWeek])
+}
+
+model Exception {
+  id         String   @id @default(uuid())
+  resourceId String
+  date       DateTime // Date of the exception
+  reason     String?
+  createdAt  DateTime @default(now())
+
+  // Relations
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Cascade)
+
+  @@index([resourceId])
+  @@index([date])
+}
+
+model Booking {
+  id                 String    @id @default(uuid())
+  serviceId          String
+  resourceId         String
+  customerId         String
+  slotTime           DateTime
+  status             String    @default("REQUEST") // REQUEST | BOOKED | CANCELLED
+  customerName       String
+  customerEmail      String
+  customerPhone      String
+  notes              String?
+  cancellationReason String?
+  statusChangedBy    String?
+  statusChangedAt    DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  // Relations
+  service  Service  @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  resource Resource @relation(fields: [resourceId], references: [id], onDelete: Restrict)
+  customer User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  payment  Payment?
+
+  @@index([customerId])
+  @@index([serviceId])
+  @@index([resourceId])
+  @@index([slotTime])
+  @@index([status])
+  @@index([resourceId, slotTime, status])
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  bookingId     String   @unique
+  amount        Float    // Stored as Float
+  transactionId String   @unique
+  status        String   // pending | completed | failed
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([transactionId])
+  @@index([status])
+}

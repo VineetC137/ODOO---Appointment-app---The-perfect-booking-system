@@ -1,0 +1,36 @@
+# Dependencies
+node_modules/
+
+# Environment variables — keep .env.example, exclude actual .env
+.env
+.env.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# SQLite database file (auto-created on first run)
+backend/prisma/dev.db
+backend/prisma/dev.db-journal
+backend/prisma/dev.db-shm
+backend/prisma/dev.db-wal
+
+# Frontend build cache
+frontend/dist/
+frontend/.vite/
+
+# Lock files (optional — remove these lines if you want to commit them)
+# package-lock.json

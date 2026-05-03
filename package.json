@@ -1,0 +1,19 @@
+{
+  "name": "appointment-booking-mvp",
+  "version": "1.0.0",
+  "description": "Full-stack appointment booking system for hackathon",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "db:setup": "cd backend && npm run db:migrate && npm run db:seed",
+    "db:studio": "cd backend && npm run db:studio"
+  },
+  "keywords": ["appointment", "booking", "react", "typescript", "node", "express", "postgresql", "prisma"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
