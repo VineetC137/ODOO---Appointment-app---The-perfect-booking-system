@@ -210,6 +210,7 @@ const OrganiserDashboardPage: React.FC = () => {
   const [tab, setTab] = useState<'bookings' | 'services' | 'resources'>('bookings');
   const [showSvcForm, setShowSvcForm] = useState(false);
   const [showResForm, setShowResForm] = useState(false);
+  const [editingService, setEditingService] = useState<string | null>(null);
   const [svcForm, setSvcForm] = useState({ name: '', description: '', duration: 30, price: 0, resourceIds: [] as string[] });
   const [resForm, setResForm] = useState({ name: '', type: 'STAFF', capacity: 1 });
   const [expandedResource, setExpandedResource] = useState<string | null>(null);
@@ -245,8 +246,36 @@ const OrganiserDashboardPage: React.FC = () => {
 
   const handleCreateSvc = async (e: React.FormEvent) => {
     e.preventDefault();
-    try { await api.createService(svcForm); setShowSvcForm(false); setSvcForm({ name: '', description: '', duration: 30, price: 0, resourceIds: [] }); loadAll(); }
+    try { 
+      if (editingService) {
+        await api.updateService(editingService, svcForm);
+      } else {
+        await api.createService(svcForm);
+      }
+      setShowSvcForm(false); 
+      setEditingService(null);
+      setSvcForm({ name: '', description: '', duration: 30, price: 0, resourceIds: [] }); 
+      loadAll(); 
+    }
     catch (e: any) { alert(e.response?.data?.error || 'Failed'); }
+  };
+
+  const handleEditService = (service: any) => {
+    setSvcForm({
+      name: service.name,
+      description: service.description || '',
+      duration: service.duration,
+      price: service.price,
+      resourceIds: service.serviceResources?.map((sr: any) => sr.resourceId) || []
+    });
+    setEditingService(service.id);
+    setShowSvcForm(true);
+  };
+
+  const handleCancelEdit = () => {
+    setShowSvcForm(false);
+    setEditingService(null);
+    setSvcForm({ name: '', description: '', duration: 30, price: 0, resourceIds: [] });
   };
 
   const handleCreateRes = async (e: React.FormEvent) => {
@@ -415,7 +444,9 @@ const OrganiserDashboardPage: React.FC = () => {
             </div>
             {showSvcForm && (
               <div className="theme-card rounded-2xl p-6 mb-5">
-                <h4 className="font-bold theme-text mb-4">Create Service</h4>
+                <h4 className="font-bold theme-text mb-4">
+                  {editingService ? 'Edit Service' : 'Create Service'}
+                </h4>
                 <form onSubmit={handleCreateSvc} className="space-y-3">
                   <input className="w-full theme-input rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" placeholder="Service name *" value={svcForm.name} onChange={e => setSvcForm(f => ({ ...f, name: e.target.value }))} required />
                   <input className="w-full theme-input rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400" placeholder="Description" value={svcForm.description} onChange={e => setSvcForm(f => ({ ...f, description: e.target.value }))} />
@@ -445,8 +476,10 @@ const OrganiserDashboardPage: React.FC = () => {
                     </div>
                   )}
                   <div className="flex gap-3 pt-2">
-                    <button type="submit" className="px-5 py-2.5 bg-primary-500 text-white text-sm font-semibold rounded-xl hover:bg-primary-600 transition-colors">Create</button>
-                    <button type="button" onClick={() => setShowSvcForm(false)} className="px-5 py-2.5 border border-gray-200 text-gray-600 text-sm font-semibold rounded-xl theme-bg-row-hover transition-colors">Cancel</button>
+                    <button type="submit" className="px-5 py-2.5 bg-primary-500 text-white text-sm font-semibold rounded-xl hover:bg-primary-600 transition-colors">
+                      {editingService ? 'Update Service' : 'Create Service'}
+                    </button>
+                    <button type="button" onClick={handleCancelEdit} className="px-5 py-2.5 border border-gray-200 text-gray-600 text-sm font-semibold rounded-xl theme-bg-row-hover transition-colors">Cancel</button>
                   </div>
                 </form>
               </div>
@@ -459,10 +492,30 @@ const OrganiserDashboardPage: React.FC = () => {
                     <div>
                       <p className="font-semibold theme-text">{s.name}</p>
                       <p className="text-sm theme-text-muted">{s.duration} min · {rupee(s.price)}</p>
+                      {s.description && (
+                        <p className="text-xs theme-text-muted mt-1 max-w-md truncate">{s.description}</p>
+                      )}
+                      {s.serviceResources && s.serviceResources.length > 0 && (
+                        <div className="flex gap-1 mt-2">
+                          {s.serviceResources.map((sr: any) => (
+                            <span key={sr.id} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+                              {sr.resource.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <button onClick={() => { if(confirm('Delete this service?')) api.deleteService(s.id).then(loadAll); }}
-                    className="text-xs text-red-500 hover:text-red-700 px-3 py-1.5 hover:bg-red-50 rounded-lg transition-colors">Delete</button>
+                  <div className="flex gap-2">
+                    <button 
+                      onClick={() => handleEditService(s)}
+                      className="text-xs text-blue-600 hover:text-blue-800 px-3 py-1.5 hover:bg-blue-50 rounded-lg transition-colors font-medium"
+                    >
+                      Edit
+                    </button>
+                    <button onClick={() => { if(confirm('Delete this service?')) api.deleteService(s.id).then(loadAll); }}
+                      className="text-xs text-red-500 hover:text-red-700 px-3 py-1.5 hover:bg-red-50 rounded-lg transition-colors">Delete</button>
+                  </div>
                 </div>
               ))}
               {services.length === 0 && <div className="text-center py-12 text-gray-400 dark:text-gray-500 theme-card rounded-2xl">No services yet. Create your first service!</div>}

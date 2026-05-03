@@ -26,7 +26,7 @@ router.post('/auth/logout', authenticateToken, (req: Request, res: Response) => 
 router.get('/services', (req: Request, res: Response) => serviceController.getAllServices(req, res));
 router.get('/services/:id', (req: Request, res: Response) => serviceController.getServiceById(req, res));
 router.post('/services', authenticateToken, authorizeRole('ORGANISER'), serviceController.validateCreateService, (req: Request, res: Response) => serviceController.createService(req as AuthRequest, res));
-router.put('/services/:id', authenticateToken, authorizeRole('ORGANISER'), (req: Request, res: Response) => serviceController.updateService(req as AuthRequest, res));
+router.put('/services/:id', authenticateToken, authorizeRole('ORGANISER'), serviceController.validateUpdateService, (req: Request, res: Response) => serviceController.updateService(req as AuthRequest, res));
 router.delete('/services/:id', authenticateToken, authorizeRole('ORGANISER'), (req: Request, res: Response) => serviceController.deleteService(req as AuthRequest, res));
 router.get('/organiser/services', authenticateToken, authorizeRole('ORGANISER'), (req: Request, res: Response) => serviceController.getOrganiserServices(req as AuthRequest, res));
 
